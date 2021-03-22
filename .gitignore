@@ -1,6 +1,4 @@
 a.out
-.vscode/c_cpp_properties.json
-.vscode/tasks.json
-.vscode/launch.json
+.vscode/
 input.txt
 closest
