@@ -142,7 +142,7 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
     t = clock() - t;
 
     cout << fixed << setprecision(6);
-    cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y;
+    cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y << endl;
 
     free(px);
     free(py);
