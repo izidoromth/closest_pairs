@@ -18,9 +18,9 @@ class Ponto
 
 Ponto* ObterPares(char* nome_do_arquivo, int* num_pontos);
 void ResolverForcaBruta(Ponto pontos[], int num_pontos);
-void ForcaBruta(Ponto pontos[], int e, int d, Ponto* p1, Ponto* p2, double *distancia);
+void ForcaBruta(Ponto pontos[], int e, int d, Ponto& p1, Ponto& p2, double *distancia);
 void ResolverDivisaoConquista(Ponto pontos[], int num_pontos);
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto* p1, Ponto* p2);
+double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2);
 void DivideY(Ponto py[], Ponto px[], Ponto pe[], Ponto pd[], int e, int d, int p_e);
 void MontaY2Delta(Ponto pontos[], Ponto y[], int e, int d, int meio, double delta);
 void MergeSort(Ponto pontos[], int l, int r, bool order_x);
@@ -82,7 +82,7 @@ void ResolverForcaBruta(Ponto pontos[], int num_pontos)
     
     t = clock();
 
-    ForcaBruta(pontos, 0, num_pontos-1, &p1, &p2, &distancia);
+    ForcaBruta(pontos, 0, num_pontos-1, p1, p2, &distancia);
 
     t = clock() - t;
 
@@ -90,7 +90,7 @@ void ResolverForcaBruta(Ponto pontos[], int num_pontos)
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y << ' ';
 }
 
-void ForcaBruta(Ponto pontos[], int e, int d, Ponto* p1, Ponto* p2, double *distancia)
+void ForcaBruta(Ponto pontos[], int e, int d, Ponto& p1, Ponto& p2, double *distancia)
 {
     for(int i=e; i<=d; i++)
     {
@@ -104,8 +104,10 @@ void ForcaBruta(Ponto pontos[], int e, int d, Ponto* p1, Ponto* p2, double *dist
             if(dist < *distancia)
             {
                 *distancia = dist;
-                *p1 = pontos[i];
-                *p2 = pontos[j];
+                p1.x = pontos[i].x;
+                p1.y = pontos[i].y;
+                p2.x = pontos[j].x;
+                p2.y = pontos[j].y;
             }
         }
     }
@@ -130,15 +132,18 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
 
     t = clock();
 
-    distancia = DivisaoConquista(px, py, 0, num_pontos-1, &p1, &p2);
+    distancia = DivisaoConquista(px, py, 0, num_pontos-1, p1, p2);
 
     t = clock() - t;
 
     cout << fixed << setprecision(6);
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y;
+
+    delete px;
+    delete py;
 }
 
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto* p1, Ponto* p2)
+double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2)
 {
     int num_pontos = d - e + 1;
     double distancia = 4297967296;
@@ -159,11 +164,12 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto* p1, Ponto* 
 
     DivideY(py, px, pye, pyd, e, d, pe);
 
-    double de = DivisaoConquista(px, pye, e, pe, &pe1, &pe2);
-    double dd = DivisaoConquista(px, pyd, pd, d, &pd1, &pd2);
+    double de = DivisaoConquista(px, pye, e, pe, pe1, pe2);
+    double dd = DivisaoConquista(px, pyd, pd, d, pd1, pd2);
 
-    Ponto yd[8] = {0,0,0,0,0,0,0,0};
     double delta = Menor(de, dd);
+
+    Ponto* yd = new Ponto[8];
 
     MontaY2Delta(py, yd, e, d, pe, delta);
 
@@ -174,7 +180,7 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto* p1, Ponto* 
             break;
     }
 
-    double d_er = delta;
+    double ded = 4297967296;
     Ponto p1er, p2er;
 
     for(int z=0; z<k; z++)
@@ -186,32 +192,42 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto* p1, Ponto* 
 
             double dist = sqrt(pow(dx,2) + pow(dy,2));
 
-            if(dist < d_er)
+            if(dist < ded)
             {
-                d_er = dist;
-                p1er = yd[z];
-                p2er = yd[x];
+                ded = dist;
+                p1er.x = yd[z].x;
+                p1er.y = yd[z].y;
+                p2er.x = yd[x].x;
+                p2er.y = yd[x].y;
             }
         }
     }
 
-    distancia = Menor(delta, d_er);
+    distancia = Menor(delta, ded);
 
     if(distancia == de)
     {
-        *p1 = pe1;
-        *p2 = pe2;
+        p1.x = pe1.x;
+        p1.y = pe1.y;
+        p2.x = pe2.x;
+        p2.y = pe2.y;
     }
-    else if(distancia == d_er)
+    else if(distancia == ded)
     {
-        *p1 = p1er;
-        *p2 = p2er;
+        p1.x = p1er.x;
+        p1.y = p1er.y;
+        p2.x = p2er.x;
+        p2.y = p2er.y;
     }
     else
     {
-        *p1 = pd1;
-        *p2 = pd2;
+        p1.x = pd1.x;
+        p1.y = pd1.y;
+        p2.x = pd2.x;
+        p2.y = pd2.y;
     }
+
+    delete yd;
 
     return distancia;
 }
@@ -223,12 +239,14 @@ void DivideY(Ponto py[], Ponto px[], Ponto pe[], Ponto pd[], int e, int d, int p
     {
         if(py[i].x <= px[p_e].x)
         {
-            pe[ei] = py[i];
+            pe[ei].x = py[i].x;
+            pe[ei].y = py[i].y;
             ei++;
         }
         else
         {
-            pd[di] = py[i];
+            pd[di].x = py[i].x;
+            pd[di].y = py[i].y;
             di++;
         }
     }
@@ -237,11 +255,17 @@ void DivideY(Ponto py[], Ponto px[], Ponto pe[], Ponto pd[], int e, int d, int p
 void MontaY2Delta(Ponto pontos[], Ponto y[], int e, int d, int meio, double delta)
 {
     int iy = 0;
+    for(int i = 0; i < 8; i++)
+    {
+        y[i].x = 0;
+        y[i].y = 0;
+    }
     for(int i=e; i<=d; i++)
     {
-        if(abs(pontos[i].x-pontos[meio].x) < delta)
+        if(fabs(pontos[i].x-pontos[meio].x) < delta)
         {
-            y[iy] = pontos[i];
+            y[iy].x = pontos[i].x;
+            y[iy].y = pontos[i].y;
             iy++;
         }
     }
