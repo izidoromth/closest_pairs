@@ -6,7 +6,7 @@
 #include <sstream>
 #include <math.h>
 #include <time.h>
-#include <bits/stdc++.h>
+#include <string.h>
 
 using namespace std;
 
@@ -16,13 +16,13 @@ class Ponto
     double x, y;
 };
 
-Ponto* ObterPares(char* nome_do_arquivo, int* num_pontos);
+Ponto* ObterPares(char* nome_do_arquivo, int& num_pontos);
 void ResolverForcaBruta(Ponto pontos[], int num_pontos);
 void ForcaBruta(Ponto pontos[], int e, int d, Ponto& p1, Ponto& p2, double *distancia);
 void ResolverDivisaoConquista(Ponto pontos[], int num_pontos);
 double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2);
-void DivideY(Ponto py[], Ponto px[], Ponto pe[], Ponto pd[], int e, int d, int p_e);
-void MontaY2Delta(Ponto pontos[], Ponto y[], int e, int d, int meio, double delta);
+Ponto* DivideY(Ponto py[], Ponto px[], bool esq, int num_pontos, int tam, double meio);
+Ponto* MontaY2Delta(Ponto pontos[], int num_pontos, double pxe, double delta);
 void MergeSort(Ponto pontos[], int l, int r, bool order_x);
 void Merge(Ponto pontos[], int l, int m, int r, bool order_x);
 double Menor(double a, double b);
@@ -35,13 +35,13 @@ int main(int argc, char* argv[])
         return -1;
     }
     int num_pontos = 0;
-    Ponto* pontos = ObterPares(argv[1], &num_pontos);  
+    Ponto* pontos = ObterPares(argv[1], num_pontos);  
     ResolverForcaBruta(pontos, num_pontos);
     ResolverDivisaoConquista(pontos, num_pontos);
     return 0;    
 }
 
-Ponto* ObterPares(char* nome_do_arquivo, int* num_pontos)
+Ponto* ObterPares(char* nome_do_arquivo, int& num_pontos)
 {
     ifstream arquivo;
     Ponto* pontos;
@@ -54,10 +54,10 @@ Ponto* ObterPares(char* nome_do_arquivo, int* num_pontos)
     else
     {
         getline(arquivo, line);
-        *num_pontos = stoi(line);
-        pontos = new Ponto[*num_pontos];
+        num_pontos = stoi(line);
+        pontos = (Ponto*)malloc(num_pontos*sizeof(Ponto));
         int i = 0;
-        while(i < *num_pontos)
+        while(i < num_pontos)
         {
             getline(arquivo, line);  
             Ponto ponto;   
@@ -117,11 +117,16 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
 {
     Ponto p1, p2;
 
-    Ponto* px = new Ponto[num_pontos];
-    Ponto* py = new Ponto[num_pontos];
+    Ponto* px = (Ponto*)malloc(num_pontos*sizeof(Ponto));
+    Ponto* py = (Ponto*)malloc(num_pontos*sizeof(Ponto));
 
-    memcpy(px, pontos, num_pontos*sizeof(Ponto));
-    memcpy(py, pontos, num_pontos*sizeof(Ponto));
+    for(int i = 0; i < num_pontos; i++)
+    {
+        px[i].x = pontos[i].x;
+        px[i].y = pontos[i].y;
+        py[i].x = pontos[i].x;
+        py[i].y = pontos[i].y;
+    }
 
     MergeSort(px, 0, num_pontos-1, true);
     MergeSort(py, 0, num_pontos-1, false);
@@ -139,8 +144,8 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
     cout << fixed << setprecision(6);
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y;
 
-    delete px;
-    delete py;
+    free(px);
+    free(py);
 }
 
 double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2)
@@ -156,22 +161,18 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
 
     Ponto pd1, pd2, pe1, pe2;
 
-    int pe = (int)num_pontos%2 == 0 ? (int)(num_pontos/2-1) + e : (int)(num_pontos/2) + e;
+    int pe = num_pontos%2 == 0 ? (int)(num_pontos/2 - 1 + e) : (int)(num_pontos/2 + e);
     int pd = pe + 1;
 
-    Ponto pye[pe-e+1];
-    Ponto pyd[d-pd+1];    
-
-    DivideY(py, px, pye, pyd, e, d, pe);
+    Ponto* pye = DivideY(py, px, true, num_pontos, pe-e+1, px[pe].x);
+    Ponto* pyd = DivideY(py, px, false, num_pontos, d-pd+1, px[pe].x);
 
     double de = DivisaoConquista(px, pye, e, pe, pe1, pe2);
     double dd = DivisaoConquista(px, pyd, pd, d, pd1, pd2);
 
     double delta = Menor(de, dd);
-
-    Ponto* yd = new Ponto[8];
-
-    MontaY2Delta(py, yd, e, d, pe, delta);
+    
+    Ponto* yd = MontaY2Delta(py, num_pontos, px[pe].x, delta);
 
     int k;
     for(k=0; k<8; k++)
@@ -180,7 +181,7 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
             break;
     }
 
-    double ded = 4297967296;
+    double ded = delta;
     Ponto p1er, p2er;
 
     for(int z=0; z<k; z++)
@@ -212,63 +213,79 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
         p2.x = pe2.x;
         p2.y = pe2.y;
     }
-    else if(distancia == ded)
-    {
-        p1.x = p1er.x;
-        p1.y = p1er.y;
-        p2.x = p2er.x;
-        p2.y = p2er.y;
-    }
-    else
+    else if(distancia == dd)
     {
         p1.x = pd1.x;
         p1.y = pd1.y;
         p2.x = pd2.x;
         p2.y = pd2.y;
     }
+    else
+    {
+        p1.x = p1er.x;
+        p1.y = p1er.y;
+        p2.x = p2er.x;
+        p2.y = p2er.y;
+    }  
 
-    delete yd;
+    //free(pye);
+    //free(pyd);
+    free(yd);
 
     return distancia;
 }
 
-void DivideY(Ponto py[], Ponto px[], Ponto pe[], Ponto pd[], int e, int d, int p_e)
+Ponto* DivideY(Ponto py[], Ponto px[], bool esq, int num_pontos, int tam, double meio)
 {
-    int ei = 0, di = 0;
-    for(int i=e; i<=d; i++)
+    Ponto* y = (Ponto*)malloc(num_pontos*sizeof(Ponto));
+    int j = 0;
+    if(esq)
     {
-        if(py[i].x <= px[p_e].x)
+        for(int i=0; i<num_pontos; i++)
         {
-            pe[ei].x = py[i].x;
-            pe[ei].y = py[i].y;
-            ei++;
-        }
-        else
-        {
-            pd[di].x = py[i].x;
-            pd[di].y = py[i].y;
-            di++;
+            if(py[i].x <= meio)
+            {
+                y[j].x = py[i].x;
+                y[j].y = py[i].y;
+                j++;
+            }
         }
     }
+    else
+    {        
+        for(int i=0; i<num_pontos; i++)
+        {
+            if(py[i].x > meio)
+            {
+                y[j].x = py[i].x;
+                y[j].y = py[i].y;
+                j++;
+            }
+        }
+    }
+    return y;
 }
 
-void MontaY2Delta(Ponto pontos[], Ponto y[], int e, int d, int meio, double delta)
+Ponto* MontaY2Delta(Ponto pontos[], int num_pontos, double pxe, double delta)
 {
-    int iy = 0;
-    for(int i = 0; i < 8; i++)
+    Ponto* y2delta = (Ponto*)malloc(8*sizeof(Ponto));
+    int i;
+    for(i = 0; i < 8; i++)
     {
-        y[i].x = 0;
-        y[i].y = 0;
+        y2delta[i].x = 0;
+        y2delta[i].y = 0;
     }
-    for(int i=e; i<=d; i++)
+    i = 0;  
+    for(int j=0; j<num_pontos; j++)
     {
-        if(fabs(pontos[i].x-pontos[meio].x) < delta)
+        if(fabs(pontos[j].x-pxe) < delta)
         {
-            y[iy].x = pontos[i].x;
-            y[iy].y = pontos[i].y;
-            iy++;
+            y2delta[i].x = pontos[j].x;
+            y2delta[i].y = pontos[j].y;
+            i++;
         }
     }
+    return y2delta;
 }
 
 void MergeSort(Ponto pontos[],int l,int r, bool order_x)
