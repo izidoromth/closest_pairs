@@ -163,20 +163,24 @@ double DivisaoConquista(Ponto* px[], Ponto* py[], int e, int d, Ponto& p1, Ponto
     int pe = num_pontos%2 == 0 ? (int)(num_pontos/2 - 1 + e) : (int)(num_pontos/2 + e);
     int pd = pe + 1;
 
-    Ponto* pye = (Ponto*)malloc((pe-e+1)*sizeof(Ponto));//DivideY(py, true, num_pontos, pe-e+1, (*px)[pe].x);
-    Ponto* pyd = (Ponto*)malloc((d-pd+1)*sizeof(Ponto));
-
+    Ponto* pye = NULL;//DivideY(py, true, num_pontos, pe-e+1, (*px)[pe].x);
+    Ponto* pyd = NULL;
+    
+    pye = (Ponto*)malloc((pe-e+1)*sizeof(Ponto));
+    pyd = (Ponto*)malloc((d-pd+1)*sizeof(Ponto));
+    
     DivideY(&pye, &pyd, py, num_pontos, (*px)[pe].x);
 
     double de = DivisaoConquista(px, &pye, e, pe, pe1, pe2);
     double dd = DivisaoConquista(px, &pyd, pd, d, pd1, pd2);
 
-    //free(pye);
-    //free(pyd);
+    free(pye); pye = NULL;
+    //free(pyd); pyd = NULL;
 
     double delta = Menor(de, dd);
     
-    Ponto* yd = (Ponto*)malloc(8*sizeof(Ponto));
+    Ponto* yd = NULL;
+    yd = (Ponto*)malloc(8*sizeof(Ponto));
 
     MontaY2Delta(&yd, py, num_pontos,(*px)[pe].x, delta);
 
@@ -210,7 +214,7 @@ double DivisaoConquista(Ponto* px[], Ponto* py[], int e, int d, Ponto& p1, Ponto
         }
     }
 
-    free(yd);
+    free(yd); yd = NULL;
 
     distancia = Menor(delta, ded);
 
