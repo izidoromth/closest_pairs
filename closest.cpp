@@ -237,7 +237,7 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
 
 Ponto* DivideY(Ponto py[], Ponto px[], bool esq, int num_pontos, int tam, double meio)
 {
-    Ponto* y = (Ponto*)malloc(num_pontos*sizeof(Ponto));
+    Ponto* y = (Ponto*)malloc(tam*sizeof(Ponto));
     int j = 0;
     if(esq)
     {
