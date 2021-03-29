@@ -14,17 +14,19 @@ class Ponto
 {
     public:
     double x, y;
+    Ponto(){ x = 0.0; y = 0.0; }
+    ~Ponto(){}
 };
 
-Ponto* ObterPares(char* nome_do_arquivo, int& num_pontos);
-void ResolverForcaBruta(Ponto pontos[], int num_pontos);
-void ForcaBruta(Ponto pontos[], int e, int d, Ponto& p1, Ponto& p2, double *distancia);
-void ResolverDivisaoConquista(Ponto pontos[], int num_pontos);
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2);
-Ponto* DivideY(Ponto py[], Ponto px[], bool esq, int num_pontos, int tam, double meio);
-Ponto* MontaY2Delta(Ponto pontos[], int num_pontos, double pxe, double delta);
-void MergeSort(Ponto pontos[], int l, int r, bool order_x);
-void Merge(Ponto pontos[], int l, int m, int r, bool order_x);
+void ObterPares(Ponto* pontos[], char* nome_do_arquivo, int& num_pontos);
+void ResolverForcaBruta(Ponto* pontos[], int num_pontos);
+void ForcaBruta(Ponto* pontos[], int e, int d, Ponto& p1, Ponto& p2, double& distancia);
+void ResolverDivisaoConquista(Ponto* pontos[], int num_pontos);
+double DivisaoConquista(Ponto* px[], Ponto* py[], int e, int d, Ponto& p1, Ponto& p2);
+void DivideY(Ponto* pye[], Ponto* pyd[], Ponto* py[], int num_pontos, double meio);
+void MontaY2Delta(Ponto *yd[], Ponto* pontos[], int num_pontos, double meio, double delta);
+void MergeSort(Ponto* pontos[], int l, int r, bool order_x);
+void Merge(Ponto* pontos[], int l, int m, int r, bool order_x);
 double Menor(double a, double b);
 
 int main(int argc, char* argv[])    
@@ -35,16 +37,16 @@ int main(int argc, char* argv[])
         return -1;
     }
     int num_pontos = 0;
-    Ponto* pontos = ObterPares(argv[1], num_pontos);  
-    ResolverForcaBruta(pontos, num_pontos);
-    ResolverDivisaoConquista(pontos, num_pontos);
+    Ponto* pontos = NULL;
+    ObterPares(&pontos, argv[1], num_pontos);  
+    ResolverForcaBruta(&pontos, num_pontos);
+    ResolverDivisaoConquista(&pontos, num_pontos);
     return 0;    
 }
 
-Ponto* ObterPares(char* nome_do_arquivo, int& num_pontos)
+void ObterPares(Ponto* pontos[], char* nome_do_arquivo, int& num_pontos)
 {
     ifstream arquivo;
-    Ponto* pontos;
     string line;
     arquivo.open(nome_do_arquivo);
     if(!arquivo)
@@ -55,26 +57,23 @@ Ponto* ObterPares(char* nome_do_arquivo, int& num_pontos)
     {
         getline(arquivo, line);
         num_pontos = stoi(line);
-        pontos = (Ponto*)malloc(num_pontos*sizeof(Ponto));
+        *pontos = (Ponto*)malloc(num_pontos*sizeof(Ponto));
         int i = 0;
         while(i < num_pontos)
         {
-            getline(arquivo, line);  
-            Ponto ponto;   
+            getline(arquivo, line); 
             stringstream ss(line);
             string valor;
             getline(ss, valor, ' ');
-            ponto.x = stod(valor);
+            (*pontos)[i].x = stod(valor);
             getline(ss, valor, ' ');
-            ponto.y = stod(valor);
-            pontos[i] = ponto;
+            (*pontos)[i].y = stod(valor);
             i++;
         }
     }
-    return pontos;
 }
 
-void ResolverForcaBruta(Ponto pontos[], int num_pontos)
+void ResolverForcaBruta(Ponto* pontos[], int num_pontos)
 {
     Ponto p1, p2;
     double distancia = 4297967296;
@@ -82,7 +81,7 @@ void ResolverForcaBruta(Ponto pontos[], int num_pontos)
     
     t = clock();
 
-    ForcaBruta(pontos, 0, num_pontos-1, p1, p2, &distancia);
+    ForcaBruta(pontos, 0, num_pontos-1, p1, p2, distancia);
 
     t = clock() - t;
 
@@ -90,30 +89,30 @@ void ResolverForcaBruta(Ponto pontos[], int num_pontos)
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y << ' ';
 }
 
-void ForcaBruta(Ponto pontos[], int e, int d, Ponto& p1, Ponto& p2, double *distancia)
+void ForcaBruta(Ponto* pontos[], int e, int d, Ponto& p1, Ponto& p2, double& distancia)
 {
     for(int i=e; i<=d; i++)
     {
         for(int j=i+1; j<=d; j++)
         {
-            double dx = pontos[i].x-pontos[j].x;
-            double dy = pontos[i].y-pontos[j].y;
+            double dx = (*pontos)[i].x-(*pontos)[j].x;
+            double dy = (*pontos)[i].y-(*pontos)[j].y;
 
             double dist = sqrt(pow(dx,2) + pow(dy,2));
 
-            if(dist < *distancia)
+            if(dist < distancia)
             {
-                *distancia = dist;
-                p1.x = pontos[i].x;
-                p1.y = pontos[i].y;
-                p2.x = pontos[j].x;
-                p2.y = pontos[j].y;
+                distancia = dist;
+                p1.x = (*pontos)[i].x;
+                p1.y = (*pontos)[i].y;
+                p2.x = (*pontos)[j].x;
+                p2.y = (*pontos)[j].y;
             }
         }
     }
 }
 
-void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
+void ResolverDivisaoConquista(Ponto* pontos[], int num_pontos)
 {
     Ponto p1, p2;
 
@@ -122,14 +121,14 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
 
     for(int i = 0; i < num_pontos; i++)
     {
-        px[i].x = pontos[i].x;
-        px[i].y = pontos[i].y;
-        py[i].x = pontos[i].x;
-        py[i].y = pontos[i].y;
+        px[i].x = (*pontos)[i].x;
+        px[i].y = (*pontos)[i].y;
+        py[i].x = (*pontos)[i].x;
+        py[i].y = (*pontos)[i].y;
     }
 
-    MergeSort(px, 0, num_pontos-1, true);
-    MergeSort(py, 0, num_pontos-1, false);
+    MergeSort(&px, 0, num_pontos-1, true);
+    MergeSort(&py, 0, num_pontos-1, false);
 
     double distancia = 4297967296;
 
@@ -137,7 +136,7 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
 
     t = clock();
 
-    distancia = DivisaoConquista(px, py, 0, num_pontos-1, p1, p2);
+    distancia = DivisaoConquista(&px, &py, 0, num_pontos-1, p1, p2);
 
     t = clock() - t;
 
@@ -148,14 +147,14 @@ void ResolverDivisaoConquista(Ponto pontos[], int num_pontos)
     free(py);
 }
 
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2)
+double DivisaoConquista(Ponto* px[], Ponto* py[], int e, int d, Ponto& p1, Ponto& p2)
 {
     int num_pontos = d - e + 1;
     double distancia = 4297967296;
 
     if(num_pontos <= 3)
     {
-        ForcaBruta(px, e, d, p1, p2, &distancia);
+        ForcaBruta(px, e, d, p1, p2, distancia);
         return distancia;
     }
 
@@ -164,15 +163,22 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
     int pe = num_pontos%2 == 0 ? (int)(num_pontos/2 - 1 + e) : (int)(num_pontos/2 + e);
     int pd = pe + 1;
 
-    Ponto* pye = DivideY(py, px, true, num_pontos, pe-e+1, px[pe].x);
-    Ponto* pyd = DivideY(py, px, false, num_pontos, d-pd+1, px[pe].x);
+    Ponto* pye = (Ponto*)malloc((pe-e+1)*sizeof(Ponto));//DivideY(py, true, num_pontos, pe-e+1, (*px)[pe].x);
+    Ponto* pyd = (Ponto*)malloc((d-pd+1)*sizeof(Ponto));
 
-    double de = DivisaoConquista(px, pye, e, pe, pe1, pe2);
-    double dd = DivisaoConquista(px, pyd, pd, d, pd1, pd2);
+    DivideY(&pye, &pyd, py, num_pontos, (*px)[pe].x);
+
+    double de = DivisaoConquista(px, &pye, e, pe, pe1, pe2);
+    double dd = DivisaoConquista(px, &pyd, pd, d, pd1, pd2);
+
+    //free(pye);
+    //free(pyd);
 
     double delta = Menor(de, dd);
     
-    Ponto* yd = MontaY2Delta(py, num_pontos, px[pe].x, delta);
+    Ponto* yd = (Ponto*)malloc(8*sizeof(Ponto));
+
+    MontaY2Delta(&yd, py, num_pontos,(*px)[pe].x, delta);
 
     int k;
     for(k=0; k<8; k++)
@@ -204,6 +210,8 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
         }
     }
 
+    free(yd);
+
     distancia = Menor(delta, ded);
 
     if(distancia == de)
@@ -226,69 +234,52 @@ double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& 
         p1.y = p1er.y;
         p2.x = p2er.x;
         p2.y = p2er.y;
-    }  
-
-    //free(pye);
-    //free(pyd);
-    free(yd);
+    }
 
     return distancia;
 }
 
-Ponto* DivideY(Ponto py[], Ponto px[], bool esq, int num_pontos, int tam, double meio)
+void DivideY(Ponto* pye[], Ponto* pyd[], Ponto* py[], int num_pontos, double meio)
 {
-    Ponto* y = (Ponto*)malloc(tam*sizeof(Ponto));
-    int j = 0;
-    if(esq)
+    int j = 0, y = 0;;
+    for(int i=0; i<num_pontos; i++)
     {
-        for(int i=0; i<num_pontos; i++)
+        if((*py)[i].x <= meio)
         {
-            if(py[i].x <= meio)
-            {
-                y[j].x = py[i].x;
-                y[j].y = py[i].y;
-                j++;
-            }
+            (*pye)[j].x = (*py)[i].x;
+            (*pye)[j].y = (*py)[i].y;
+            j++;
+        }
+        else
+        {
+            (*pyd)[y].x = (*py)[i].x;
+            (*pyd)[y].y = (*py)[i].y;
+            y++;
         }
     }
-    else
-    {        
-        for(int i=0; i<num_pontos; i++)
-        {
-            if(py[i].x > meio)
-            {
-                y[j].x = py[i].x;
-                y[j].y = py[i].y;
-                j++;
-            }
-        }
-    }
-    return y;
 }
 
-Ponto* MontaY2Delta(Ponto pontos[], int num_pontos, double pxe, double delta)
+void MontaY2Delta(Ponto *yd[], Ponto* pontos[], int num_pontos, double meio, double delta)
 {
-    Ponto* y2delta = (Ponto*)malloc(8*sizeof(Ponto));
     int i;
     for(i = 0; i < 8; i++)
     {
-        y2delta[i].x = 0;
-        y2delta[i].y = 0;
+        (*yd)[i].x = 0;
+        (*yd)[i].y = 0;
     }
     i = 0;  
     for(int j=0; j<num_pontos; j++)
     {
-        if(fabs(pontos[j].x-pxe) < delta)
+        if(fabs((*pontos)[j].x-meio) < delta)
         {
-            y2delta[i].x = pontos[j].x;
-            y2delta[i].y = pontos[j].y;
+            (*yd)[i].x = (*pontos)[j].x;
+            (*yd)[i].y = (*pontos)[j].y;
             i++;
         }
     }
-    return y2delta;
 }
 
-void MergeSort(Ponto pontos[],int l,int r, bool order_x)
+void MergeSort(Ponto* pontos[],int l,int r, bool order_x)
 {
     if(l>=r){
         return;//returns recursively
@@ -299,7 +290,7 @@ void MergeSort(Ponto pontos[],int l,int r, bool order_x)
     Merge(pontos,l,m,r,order_x);
 }
 
-void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
+void Merge(Ponto* pontos[], int l, int m, int r, bool order_x)
 {
     int n1 = m - l + 1;
     int n2 = r - m;
@@ -309,9 +300,9 @@ void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
  
     // Copy data to temp arrays L[] and R[]
     for (int i = 0; i < n1; i++)
-        L[i] = pontos[l + i];
+        L[i] = (*pontos)[l + i];
     for (int j = 0; j < n2; j++)
-        R[j] = pontos[m + 1 + j];
+        R[j] = (*pontos)[m + 1 + j];
  
     // Merge the temp arrays back into arr[l..r]
  
@@ -328,11 +319,11 @@ void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
     {
         while (i < n1 && j < n2) {
             if (L[i].x <= R[j].x) {
-                pontos[k] = L[i];
+                (*pontos)[k] = L[i];
                 i++;
             }
             else {
-                pontos[k] = R[j];
+                (*pontos)[k] = R[j];
                 j++;
             }
             k++;
@@ -342,11 +333,11 @@ void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
     {
         while (i < n1 && j < n2) {
             if (L[i].y <= R[j].y) {
-                pontos[k] = L[i];
+                (*pontos)[k] = L[i];
                 i++;
             }
             else {
-                pontos[k] = R[j];
+                (*pontos)[k] = R[j];
                 j++;
             }
             k++;
@@ -356,7 +347,7 @@ void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
     // Copy the remaining elements of
     // L[], if there are any
     while (i < n1) {
-        pontos[k] = L[i];
+        (*pontos)[k] = L[i];
         i++;
         k++;
     }
@@ -364,7 +355,7 @@ void Merge(Ponto pontos[], int l, int m, int r, bool order_x)
     // Copy the remaining elements of
     // R[], if there are any
     while (j < n2) {
-        pontos[k] = R[j];
+        (*pontos)[k] = R[j];
         j++;
         k++;
     }
