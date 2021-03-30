@@ -23,10 +23,22 @@ double DistanciaEuclidiana(Ponto p1, Ponto p2);
 void ResolverForcaBruta(Ponto* pontos, int num_pontos);
 double ForcaBruta(Ponto* pontos, int e, int d, Ponto& p1, Ponto& p2);
 void ResolverDivisaoConquista(Ponto* pontos, int num_pontos);
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2);
+double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2);
 double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto& p2);
 void MergeSort(Ponto* pontos, int l, int r, bool order_x);
 void Merge(Ponto* pontos, int l, int m, int r, bool order_x);
+
+int CompararX(const void* a, const void* b)
+{
+    Ponto *p1 = (Ponto *)a, *p2 = (Ponto *)b;
+    return (p1->x - p2->x);
+}
+
+int CompararY(const void* a, const void* b)
+{
+    Ponto *p1 = (Ponto *)a, *p2 = (Ponto *)b;
+    return (p1->y - p2->y);
+}
 
 int main(int argc, char* argv[])    
 {    
@@ -90,6 +102,13 @@ double DistanciaEuclidiana(Ponto p1, Ponto p2)
 void ResolverForcaBruta(Ponto* pontos, int num_pontos)
 {
     Ponto p1, p2;
+
+    p1.x = 9999999.0;
+    p1.y = 9999999.0;
+
+    p2.x = 0.0;
+    p2.y = 0.0;
+
     clock_t t;
     
     t = clock();
@@ -104,7 +123,7 @@ void ResolverForcaBruta(Ponto* pontos, int num_pontos)
 
 double ForcaBruta(Ponto* pontos, int e, int d, Ponto& p1, Ponto& p2)
 {
-    double distancia = 9999999.0;
+    double distancia = DistanciaEuclidiana(p1, p2);
     for(int i=e; i<=d-1; i++)
     {
         for(int j=i+1; j<=d; j++)
@@ -126,25 +145,19 @@ void ResolverDivisaoConquista(Ponto* pontos, int num_pontos)
 {
     Ponto p1, p2;
 
-    Ponto px[num_pontos];
-    Ponto py[num_pontos];
+    p1.x = 9999999.0;
+    p1.y = 9999999.0;
 
-    for(int i=0; i<num_pontos;i++)
-    {
-        px[i].x = pontos[i].x;
-        px[i].y = pontos[i].y;
-        py[i].x = pontos[i].x;
-        py[i].y = pontos[i].y;
-    }
+    p2.x = 0.0;
+    p2.y = 0.0;
 
-    MergeSort(px, 0, num_pontos-1, true);
-    MergeSort(py, 0, num_pontos-1, false);
+    MergeSort(pontos, 0, num_pontos-1, true);
 
     clock_t t;
 
     t = clock();
 
-    double distancia = DivisaoConquista(px, py, 0, num_pontos-1, p1, p2);
+    double distancia = DivisaoConquista(pontos, 0, num_pontos-1, p1, p2);
 
     t = clock() - t;
 
@@ -152,51 +165,39 @@ void ResolverDivisaoConquista(Ponto* pontos, int num_pontos)
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y << endl;
 }
 
-double DivisaoConquista(Ponto px[], Ponto py[], int e, int d, Ponto& p1, Ponto& p2)
+double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2)
 {
     int num_pontos = d-e+1;
 
     if(num_pontos <= 3)
     {
-        return ForcaBruta(px, e, d, p1, p2);
+        return ForcaBruta(p, e, d, p1, p2);
     }
 
-    int meio = (d-e)/2;
+    int meio = (d+e)/2;
 
-    Ponto pye[meio]; 
-    Ponto pyd[num_pontos-meio];
-
-    int ei = 0, di = 0; 
-
-    for (int i = 0; i < num_pontos; i++)
-    {
-        if(py[i].x <= px[meio].x && ei < meio)
-        {
-            pye[ei++] = py[i];
-        }
-        else
-        {
-            pyd[di++] = py[i];
-        }
-    }
-
-    double de = DivisaoConquista(px, py, e, meio+e, p1, p2);
-    double dd = DivisaoConquista(px, py, meio+e+1, d, p1, p2);
+    double de = DivisaoConquista(p, e, meio, p1, p2);
+    double dd = DivisaoConquista(p, meio+1, d, p1, p2);
 
     double delta = min(de, dd);
 
     Ponto pontos_delta[num_pontos];
+    
     int idelta = 0;
-    for (int i = 0; i < num_pontos; i++) 
+    for (int i = e; i < d; i++) 
     {
-        if (fabsf(py[i].x - px[meio].x) < delta) 
+        if (fabsf(p[i].x - p[meio].x) < delta) 
         {
-            pontos_delta[idelta] = py[i];
+            pontos_delta[idelta] = p[i];
             idelta++;
         }
     } 
 
-    return DistanciaEsquerdaDireita(pontos_delta, idelta, delta, p1, p2);;
+    MergeSort(pontos_delta, 0, idelta-1, false);
+
+    double ded = DistanciaEsquerdaDireita(pontos_delta, idelta, delta, p1, p2);
+
+    return min(delta, ded);
 }
 
 double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto& p2)
@@ -210,10 +211,13 @@ double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto
             {
                 ded = DistanciaEuclidiana(p[i],p[j]);
                 
-                p1.x = p[i].x;
-                p1.y = p[i].y;
-                p2.x = p[j].x;
-                p2.y = p[j].y;
+                if(ded < DistanciaEuclidiana(p1, p2))
+                { 
+                    p1.x = p[i].x;
+                    p1.y = p[i].y;
+                    p2.x = p[j].x;
+                    p2.y = p[j].y;
+                }
             }
         }
     }
