@@ -28,18 +28,6 @@ double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto
 void MergeSort(Ponto* pontos, int l, int r, bool order_x);
 void Merge(Ponto* pontos, int l, int m, int r, bool order_x);
 
-int CompararX(const void* a, const void* b)
-{
-    Ponto *p1 = (Ponto *)a, *p2 = (Ponto *)b;
-    return (p1->x - p2->x);
-}
-
-int CompararY(const void* a, const void* b)
-{
-    Ponto *p1 = (Ponto *)a, *p2 = (Ponto *)b;
-    return (p1->y - p2->y);
-}
-
 int main(int argc, char* argv[])    
 {    
     if(!argv[0])
