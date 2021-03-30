@@ -27,6 +27,8 @@ double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2);
 double DistanciaEsquerdaDireita(Ponto* p, int n, double delta, Ponto& p1, Ponto& p2);
 int cmpx(const void *a, const void *b);
 int cmpy(const void *a, const void *b);
+void msort(Ponto** arr,int l,int r, int (*cmp)(const void*, const void*));
+void merge(Ponto** arr, int l, int m, int r, int (*cmp)(const void*, const void*));
 
 int main(int argc, char* argv[])    
 {    
@@ -139,7 +141,7 @@ void ResolverDivisaoConquista(Ponto* pontos, int num_pontos)
     p2.x = 0.0;
     p2.y = 0.0;
 
-    qsort(pontos, num_pontos, sizeof(Ponto), cmpx);
+    msort(&pontos, 0, num_pontos-1, cmpx);
 
     clock_t t;
 
@@ -181,9 +183,11 @@ double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2)
         }
     }
 
-    qsort(pontos_delta, idelta, sizeof(Ponto), cmpy);
+    msort(&pontos_delta, 0, idelta-1, cmpy);
 
     double ded = DistanciaEsquerdaDireita(pontos_delta, idelta, delta, p1, p2);
+
+    free(pontos_delta);
 
     return min(delta, ded);
 }
@@ -222,4 +226,72 @@ int cmpy(const void *a, const void *b)
 {
     Ponto *p1 = (Ponto*)a, *p2 = (Ponto*)b;
     return (p1->y - p2->y);
+}
+
+void merge(Ponto** arr, int l, int m, int r, int (*cmp)(const void*, const void*))
+{
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    Ponto* L = (Ponto*)malloc((n1)*sizeof(Ponto));
+    Ponto* R = (Ponto*)malloc((n2)*sizeof(Ponto));
+
+    for (int i = 0; i < n1; i++)
+    {
+        L[i].x = (*arr)[l + i].x;
+        L[i].y = (*arr)[l + i].y;
+    }
+    for (int j = 0; j < n2; j++)
+    {
+        R[j].x = (*arr)[m + 1 + j].x;
+        R[j].y = (*arr)[m + 1 + j].y;
+    }
+
+    int i = 0;
+
+    int j = 0;
+
+    int k = l;
+ 
+    while (i < n1 && j < n2) {
+        if (cmp(&L[i],&R[j]) < 0) {
+            (*arr)[k].x = L[i].x;
+            (*arr)[k].y = L[i].y;
+            i++;
+        }
+        else {
+            (*arr)[k].x = R[j].x;
+            (*arr)[k].y = R[j].y;
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        (*arr)[k].x = L[i].x;
+        (*arr)[k].y = L[i].y;
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        (*arr)[k].x = R[j].x;
+        (*arr)[k].y = R[j].y;
+        j++;
+        k++;
+    }
+
+    free(L);
+    free(R);
+}
+
+void msort(Ponto** arr, int l, int r, int (*cmp)(const void*, const void*))
+{
+    if(l>=r){
+        return;
+    }
+    int m =l+ (r-l)/2;
+    msort(arr, l, m, cmp);
+    msort(arr, m+1, r, cmp);
+    merge(arr,l,m,r, cmp);
 }
