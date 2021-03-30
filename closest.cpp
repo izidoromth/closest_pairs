@@ -24,9 +24,9 @@ void ResolverForcaBruta(Ponto* pontos, int num_pontos);
 double ForcaBruta(Ponto* pontos, int e, int d, Ponto& p1, Ponto& p2);
 void ResolverDivisaoConquista(Ponto* pontos, int num_pontos);
 double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2);
-double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto& p2);
-void MergeSort(Ponto* pontos, int l, int r, bool order_x);
-void Merge(Ponto* pontos, int l, int m, int r, bool order_x);
+double DistanciaEsquerdaDireita(Ponto* p, int n, double delta, Ponto& p1, Ponto& p2);
+int cmpx(const void *a, const void *b);
+int cmpy(const void *a, const void *b);
 
 int main(int argc, char* argv[])    
 {    
@@ -139,7 +139,7 @@ void ResolverDivisaoConquista(Ponto* pontos, int num_pontos)
     p2.x = 0.0;
     p2.y = 0.0;
 
-    MergeSort(pontos, 0, num_pontos-1, true);
+    qsort(pontos, num_pontos, sizeof(Ponto), cmpx);
 
     clock_t t;
 
@@ -169,7 +169,7 @@ double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2)
 
     double delta = min(de, dd);
 
-    Ponto pontos_delta[num_pontos];
+    Ponto* pontos_delta = (Ponto*)malloc((num_pontos)*sizeof(Ponto));
     
     int idelta = 0;
     for (int i = e; i < d; i++) 
@@ -179,16 +179,16 @@ double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2)
             pontos_delta[idelta] = p[i];
             idelta++;
         }
-    } 
+    }
 
-    MergeSort(pontos_delta, 0, idelta-1, false);
+    qsort(pontos_delta, idelta, sizeof(Ponto), cmpy);
 
     double ded = DistanciaEsquerdaDireita(pontos_delta, idelta, delta, p1, p2);
 
     return min(delta, ded);
 }
 
-double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto& p2)
+double DistanciaEsquerdaDireita(Ponto* p, int n, double delta, Ponto& p1, Ponto& p2)
 {
     double ded = delta;
 
@@ -212,70 +212,14 @@ double DistanciaEsquerdaDireita(Ponto p[], int n, double delta, Ponto& p1, Ponto
     return ded;
 }
 
-void MergeSort(Ponto* pontos,int l,int r, bool order_x)
+int cmpx(const void *a, const void *b)
 {
-    if(l>=r){
-        return;
-    }
-    int m = l+(r-l)/2;
-    MergeSort(pontos,l,m,order_x);
-    MergeSort(pontos,m+1,r,order_x);
-    Merge(pontos,l,m,r,order_x);
+    Ponto *p1 = (Ponto*)a, *p2 = (Ponto*)b;
+    return (p1->x - p2->x);
 }
 
-void Merge(Ponto* pontos, int l, int m, int r, bool order_x)
+int cmpy(const void *a, const void *b)
 {
-    int n1 = m - l + 1;
-    int n2 = r - m;
-
-    Ponto L[n1], R[n2]; 
-    
-    for (int i = 0; i < n1; i++)
-        L[i] = pontos[l + i];
-    for (int j = 0; j < n2; j++)
-        R[j] = pontos[m + 1 + j];
-
-    int i = 0;
-    int j = 0;
-    int k = l;
- 
-    if(order_x)
-    {
-        while (i < n1 && j < n2) {
-            if (L[i].x <= R[j].x) {
-                pontos[k] = L[i];
-                i++;
-            }
-            else {
-                pontos[k] = R[j];
-                j++;
-            }
-            k++;
-        }
-    }
-    else
-    {
-        while (i < n1 && j < n2) {
-            if (L[i].y <= R[j].y) {
-                pontos[k] = L[i];
-                i++;
-            }
-            else {
-                pontos[k] = R[j];
-                j++;
-            }
-            k++;
-        }        
-    }
-
-    while (i < n1) {
-        pontos[k] = L[i];
-        i++;
-        k++;
-    }
-    while (j < n2) {
-        pontos[k] = R[j];
-        j++;
-        k++;
-    }
+    Ponto *p1 = (Ponto*)a, *p2 = (Ponto*)b;
+    return (p1->y - p2->y);
 }
