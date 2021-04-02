@@ -23,7 +23,7 @@ double DistanciaEuclidiana(Ponto p1, Ponto p2);
 void ResolverForcaBruta(Ponto* pontos, int num_pontos);
 double ForcaBruta(Ponto* pontos, int e, int d, Ponto& p1, Ponto& p2);
 void ResolverDivisaoConquista(Ponto* pontos, int num_pontos);
-double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2);
+double DivisaoConquista(Ponto* px, Ponto* py, int e, int d, Ponto& p1, Ponto& p2);
 double DistanciaEsquerdaDireita(Ponto* p, int n, double delta, Ponto& p1, Ponto& p2);
 int cmpx(const void *a, const void *b);
 int cmpy(const void *a, const void *b);
@@ -141,49 +141,79 @@ void ResolverDivisaoConquista(Ponto* pontos, int num_pontos)
     p2.x = 0.0;
     p2.y = 0.0;
 
+    Ponto* py = (Ponto*)malloc(num_pontos*sizeof(Ponto));
+
+    for(int i = 0; i < num_pontos; i++)
+    {
+        py[i].x = pontos[i].x;
+        py[i].y = pontos[i].y;
+    }
+
     msort(&pontos, 0, num_pontos-1, cmpx);
+    msort(&py, 0, num_pontos-1, cmpy);
 
     clock_t t;
 
     t = clock();
 
-    double distancia = DivisaoConquista(pontos, 0, num_pontos-1, p1, p2);
+    double distancia = DivisaoConquista(pontos, py, 0, num_pontos-1, p1, p2);
 
     t = clock() - t;
+
+    free(py);
 
     cout << fixed << setprecision(6);
     cout << t*1.0/CLOCKS_PER_SEC << ' ' << distancia << ' ' << p1.x << ' ' << p1.y << ' ' << p2.x << ' ' << p2.y << endl;
 }
 
-double DivisaoConquista(Ponto* p, int e, int d, Ponto& p1, Ponto& p2)
+double DivisaoConquista(Ponto* px, Ponto* py, int e, int d, Ponto& p1, Ponto& p2)
 {
     int num_pontos = d-e+1;
 
     if(num_pontos <= 3)
     {
-        return ForcaBruta(p, e, d, p1, p2);
+        return ForcaBruta(px, e, d, p1, p2);
     }
 
     int meio = (d+e)/2;
 
-    double de = DivisaoConquista(p, e, meio, p1, p2);
-    double dd = DivisaoConquista(p, meio+1, d, p1, p2);
+    Ponto pye[meio-e+1];
+    Ponto pyd[d-meio];
+
+    int ei = 0, di = 0;
+    for(int i=0; i<num_pontos;i++)
+    {
+        if(py[i].x <= px[meio].x && ei < meio-e+1)
+        {
+            pye[ei].x = py[i].x;
+            pye[ei].y = py[i].y;
+            ei++;
+        }
+        else
+        {
+            pyd[di].x = py[i].x;
+            pyd[di].y = py[i].y;
+            di++;
+        }
+    }
+
+    double de = DivisaoConquista(px, pye, e, meio, p1, p2);
+    double dd = DivisaoConquista(px, pyd, meio+1, d, p1, p2);
 
     double delta = min(de, dd);
 
     Ponto* pontos_delta = (Ponto*)malloc((num_pontos)*sizeof(Ponto));
     
     int idelta = 0;
-    for (int i = e; i < d; i++) 
+    for (int i = 0; i < num_pontos; i++) 
     {
-        if (fabsf(p[i].x - p[meio].x) < delta) 
+        if (fabsf(py[i].x - px[meio].x) < delta) 
         {
-            pontos_delta[idelta] = p[i];
+            pontos_delta[idelta].x = py[i].x;
+            pontos_delta[idelta].y = py[i].y;
             idelta++;
         }
     }
-
-    msort(&pontos_delta, 0, idelta-1, cmpy);
 
     double ded = DistanciaEsquerdaDireita(pontos_delta, idelta, delta, p1, p2);
 
